@@ -25,9 +25,6 @@ def search_path_2d(
     pos_list = opt.pos_list[model]
     score_list = opt.score_list[model]
 
-    print("\npos_list\n", pos_list)
-    print("\nscore_list\n", score_list)
-
     pos = pos_list[0]
     score = score_list[0]
 
