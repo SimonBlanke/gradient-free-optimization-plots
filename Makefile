@@ -10,7 +10,7 @@ develop:
 	pip install -e .
 
 reinstall:
-	pip uninstall -y hyperplotlib
-	rm -fr build dist hyperplotlib.egg-info
+	pip uninstall -y optimizationplotlib
+	rm -fr build dist optimizationplotlib.egg-info
 	python setup.py bdist_wheel
 	pip install dist/*

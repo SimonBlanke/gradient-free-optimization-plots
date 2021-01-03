@@ -1,2 +1,3 @@
-# Hyperplotlib
-Visualizations for Hyperactive
+# Optimizationplotlib
+
+Visualizations for the Gradient-Free-Optimizers and Hyperactive package.

@@ -7,7 +7,7 @@ from setuptools import find_packages
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-requires = ["hyperactive", "numpy", "tqdm", "matplotlib", "plotly"]
+requires = ["hyperactive", "gradient-free-optimizers", "matplotlib"]
 
 
 def find_version(*filepath):
@@ -22,16 +22,16 @@ def find_version(*filepath):
 
 
 setup(
-    name="hyperplotlib",
-    version=find_version("hyperplotlib/__init__.py"),
+    name="optimizationplotlib",
+    version=find_version("optimizationplotlib/__init__.py"),
     author="Simon Blanke",
     author_email="simon.blanke@yahoo.com",
     license="MIT",
-    description="Visualizations for Hyperactive",
+    description="Visualizations for the Gradient-Free-Optimizers and Hyperactive package",
     long_description=long_description,
     long_description_content_type="text/markdown",
     keywords=["visualization", "data-science"],
-    url="https://github.com/SimonBlanke/Hyperplotlib",
+    url="https://github.com/SimonBlanke/optimizationplotlib",
     packages=find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",
