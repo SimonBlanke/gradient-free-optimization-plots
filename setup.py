@@ -22,8 +22,8 @@ def find_version(*filepath):
 
 
 setup(
-    name="optimizationplotlib",
-    version=find_version("optimizationplotlib/__init__.py"),
+    name="gradient-free-optimization-plots",
+    version=find_version("gradient_free_optimization_plots/__init__.py"),
     author="Simon Blanke",
     author_email="simon.blanke@yahoo.com",
     license="MIT",
@@ -31,7 +31,7 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     keywords=["visualization", "data-science"],
-    url="https://github.com/SimonBlanke/optimizationplotlib",
+    url="https://github.com/SimonBlanke/gradient-free-optimization-plots",
     packages=find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",
