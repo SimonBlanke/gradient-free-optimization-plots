@@ -25,6 +25,7 @@ dir_ = os.path.dirname(os.path.abspath(__file__))
 
 
 def plot_search_paths(
+    path,
     optimizer,
     opt_para,
     n_iter_max,
@@ -144,14 +145,14 @@ def plot_search_paths(
 
         # plt.margins(0, 0)
         plt.savefig(
-            dir_ + "/_plots/" + opt_name + "_" + "{0:0=3d}".format(n_iter) + ".jpg",
+            path + "/_plots/" + opt_name + "_" + "{0:0=3d}".format(n_iter) + ".jpg",
             dpi=150,
             pad_inches=0,
             # bbox_inches="tight",
         )
         if n_iter == n_iter_max:
             plt.savefig(
-                dir_ + "/_plots/" + opt_name + "_" + "{0:0=3d}".format(0) + ".jpg",
+                path + "/_plots/" + opt_name + "_" + "{0:0=3d}".format(0) + ".jpg",
                 dpi=150,
                 pad_inches=0,
                 # bbox_inches="tight",
@@ -169,6 +170,7 @@ def plot_search_paths(
 
 
 def search_path_gif(
+    path,
     optimizer,
     opt_para,
     name,
@@ -179,10 +181,11 @@ def search_path_gif(
     random_state=0,
 ):
     print("\n\nname", name)
-    plots_dir = dir_ + "/_plots/"
+    plots_dir = path + "/_plots/"
     os.makedirs(plots_dir, exist_ok=True)
 
     plot_search_paths(
+        path=path,
         optimizer=optimizer,
         opt_para=opt_para,
         n_iter_max=n_iter,
@@ -199,10 +202,10 @@ def search_path_gif(
 
     _opt_ = optimizer(search_space)
     _input = (
-        " -i " + dir_ + "/_plots/" + str(_opt_.__class__.__name__) + "_" + "%03d.jpg "
+        " -i " + path + "/_plots/" + str(_opt_.__class__.__name__) + "_" + "%03d.jpg "
     )
     _scale = " -vf scale=1200:-1:flags=lanczos "
-    _output = " " + dir_ + "/gifs/" + name
+    _output = os.path.join(path, name)
 
     ffmpeg_command = (
         "ffmpeg -hide_banner -loglevel error -y"
@@ -214,12 +217,10 @@ def search_path_gif(
     print("\n -----> ffmpeg_command \n", ffmpeg_command, "\n")
     print("create " + name)
 
-    os.makedirs(dir_ + "/gifs/", exist_ok=True)
-
     os.system(ffmpeg_command)
 
     ### remove _plots
-    rm_files = glob.glob(dir_ + "/_plots/*.jpg")
+    rm_files = glob.glob(path + "/_plots/*.jpg")
     for f in rm_files:
         os.remove(f)
     os.rmdir(plots_dir)
