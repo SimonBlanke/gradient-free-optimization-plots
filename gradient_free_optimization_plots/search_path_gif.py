@@ -39,19 +39,18 @@ def plot_search_paths(
     else:
         show_opt_para = True
 
+    opt = optimizer(
+        search_space, initialize=initialize, random_state=random_state, **opt_para
+    )
+    opt.search(
+        objective_function,
+        n_iter=n_iter_max,
+        memory=False,
+        verbosity=False,
+    )
+
+    conv = Converter(search_space)
     for n_iter in tqdm(range(1, n_iter_max + 1)):
-        opt = optimizer(
-            search_space, initialize=initialize, random_state=random_state, **opt_para
-        )
-
-        opt.search(
-            objective_function,
-            n_iter=n_iter,
-            memory=False,
-            verbosity=False,
-        )
-
-        conv = Converter(search_space)
 
         def objective_function_np(args):
             params = {}
@@ -68,7 +67,7 @@ def plot_search_paths(
         xi, yi = np.meshgrid(x_all, y_all)
         zi = objective_function_np((xi, yi))
 
-        zi = np.rot90(zi, k=3)
+        zi = np.rot90(zi, k=1)
 
         plt.imshow(
             zi,
@@ -81,15 +80,29 @@ def plot_search_paths(
         )
 
         for n, opt_ in enumerate(opt.optimizers):
+            n_optimizers = len(opt.optimizers)
+            n_iter_tmp = int(n_iter / n_optimizers)
+            n_iter_mod = n_iter % n_optimizers
+
+            if n_iter_mod > n:
+                n_iter_tmp += 1
+            if n_iter_tmp == 0:
+                continue
+
             pos_list = np.array(opt_.pos_new_list)
             score_list = np.array(opt_.score_new_list)
+
+            # print("\n pos_list \n", pos_list, "\n")
+
+            if len(pos_list) == 0:
+                continue
 
             values_list = conv.positions2values(pos_list)
             values_list = np.array(values_list)
 
             plt.plot(
-                values_list[:, 0],
-                values_list[:, 1],
+                values_list[:n_iter_tmp, 0],
+                values_list[:n_iter_tmp, 1],
                 linestyle="--",
                 marker=",",
                 color="black",
@@ -98,12 +111,12 @@ def plot_search_paths(
                 linewidth=0.5,
             )
             plt.scatter(
-                values_list[:, 0],
-                values_list[:, 1],
-                c=score_list,
+                values_list[:n_iter_tmp, 0],
+                values_list[:n_iter_tmp, 1],
+                c=score_list[:n_iter_tmp],
                 marker="H",
                 s=15,
-                vmin=np.amin(score_list),
+                vmin=np.amin(score_list[:n_iter_tmp]),
                 vmax=0,
                 label=n,
                 edgecolors="black",
@@ -114,7 +127,6 @@ def plot_search_paths(
         plt.ylabel("y")
 
         nth_iteration = "\n\nnth Iteration: " + str(n_iter)
-        opt_name = str(opt.__class__.__name__)
         opt_para_name = ""
         opt_para_value = "\n\n"
 
@@ -124,7 +136,7 @@ def plot_search_paths(
                 opt_para_name += "\n " + "     " + para_name + ": "
                 opt_para_value += "\n " + str(para_value) + "                "
 
-        title = opt_name + "\n" + opt_para_name
+        title = opt.name + "\n" + opt_para_name
         plt.title(title, loc="left")
         plt.title(opt_para_value, loc="center")
 
@@ -145,18 +157,11 @@ def plot_search_paths(
 
         # plt.margins(0, 0)
         plt.savefig(
-            path + "/_plots/" + opt_name + "_" + "{0:0=3d}".format(n_iter) + ".jpg",
+            path + "/_plots/" + opt._name_ + "_" + "{0:0=3d}".format(n_iter) + ".jpg",
             dpi=150,
             pad_inches=0,
             # bbox_inches="tight",
         )
-        if n_iter == n_iter_max:
-            plt.savefig(
-                path + "/_plots/" + opt_name + "_" + "{0:0=3d}".format(0) + ".jpg",
-                dpi=150,
-                pad_inches=0,
-                # bbox_inches="tight",
-            )
 
         plt.ioff()
         # Clear the current axes.
@@ -182,6 +187,7 @@ def search_path_gif(
 ):
     print("\n\nname", name)
     plots_dir = path + "/_plots/"
+    print("plots_dir", plots_dir)
     os.makedirs(plots_dir, exist_ok=True)
 
     plot_search_paths(
@@ -201,9 +207,7 @@ def search_path_gif(
     _framerate = " -framerate " + framerate + " "
 
     _opt_ = optimizer(search_space)
-    _input = (
-        " -i " + path + "/_plots/" + str(_opt_.__class__.__name__) + "_" + "%03d.jpg "
-    )
+    _input = " -i " + path + "/_plots/" + str(_opt_._name_) + "_" + "%03d.jpg "
     _scale = " -vf scale=1200:-1:flags=lanczos "
     _output = os.path.join(path, name)
 
