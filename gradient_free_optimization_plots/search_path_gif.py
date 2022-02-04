@@ -185,6 +185,8 @@ def search_path_gif(
     initialize,
     random_state=0,
 ):
+    path = os.path.join(os.getcwd(), path)
+
     print("\n\nname", name)
     plots_dir = path + "/_plots/"
     print("plots_dir", plots_dir)
