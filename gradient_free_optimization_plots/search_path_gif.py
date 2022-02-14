@@ -14,10 +14,10 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
-import matplotlib
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 
-matplotlib.use("agg")
+mpl.use("agg")
 
 from gradient_free_optimizers.converter import Converter
 
@@ -33,6 +33,7 @@ def plot_search_paths(
     search_space,
     initialize,
     random_state,
+    title,
 ):
     if opt_para == {}:
         show_opt_para = False
@@ -136,9 +137,12 @@ def plot_search_paths(
                 opt_para_name += "\n " + "     " + para_name + ": "
                 opt_para_value += "\n " + str(para_value) + "                "
 
-        title = opt.name + "\n" + opt_para_name
-        plt.title(title, loc="left")
-        plt.title(opt_para_value, loc="center")
+        if title == True:
+            title_name = opt.name + "\n" + opt_para_name
+            plt.title(title_name, loc="left")
+            plt.title(opt_para_value, loc="center")
+        elif isinstance(title, str):
+            plt.title(title, loc="left")
 
         plt.title(nth_iteration, loc="right", fontsize=8)
 
@@ -149,7 +153,7 @@ def plot_search_paths(
 
         # plt.legend(loc="upper left", bbox_to_anchor=(-0.10, 1.2))
 
-        plt.axis("off")
+        # plt.axis("off")
 
         if show_opt_para:
             plt.subplots_adjust(top=0.75)
@@ -184,6 +188,7 @@ def search_path_gif(
     search_space,
     initialize,
     random_state=0,
+    title=True,
 ):
     path = os.path.join(os.getcwd(), path)
 
@@ -201,6 +206,7 @@ def search_path_gif(
         search_space=search_space,
         initialize=initialize,
         random_state=random_state,
+        title=title,
     )
 
     ### ffmpeg
