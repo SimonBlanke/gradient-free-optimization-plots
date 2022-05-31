@@ -17,6 +17,8 @@ from tqdm import tqdm
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 
+plt.rcParams["figure.facecolor"] = "w"
+
 mpl.use("agg")
 
 from gradient_free_optimizers.converter import Converter
@@ -118,7 +120,7 @@ def plot_search_paths(
                 marker="H",
                 s=15,
                 vmin=np.amin(score_list[:n_iter_tmp]),
-                vmax=0,
+                vmax=np.amax(score_list[:n_iter_tmp]),
                 label=n,
                 edgecolors="black",
                 linewidth=0.3,
