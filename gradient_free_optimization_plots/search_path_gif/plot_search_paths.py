@@ -1,29 +1,20 @@
-def warn(*args, **kwargs):
-    pass
+# Author: Simon Blanke
+# Email: simon.blanke@yahoo.com
+# License: MIT License
 
-
-import warnings
-
-warnings.warn = warn
-
-import os
 import gc
-import glob
-
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
+
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 
 plt.rcParams["figure.facecolor"] = "w"
-
 mpl.use("agg")
 
 from gradient_free_optimizers.optimizers.core_optimizer.converter import Converter
-
-dir_ = os.path.dirname(os.path.abspath(__file__))
 
 
 def plot_search_paths(
@@ -33,6 +24,7 @@ def plot_search_paths(
     n_iter_max,
     objective_function,
     search_space,
+    constraints,
     initialize,
     random_state,
     title,
@@ -43,12 +35,16 @@ def plot_search_paths(
         show_opt_para = True
 
     opt = optimizer(
-        search_space, initialize=initialize, random_state=random_state, **opt_para
+        search_space,
+        initialize=initialize,
+        constraints=constraints,
+        random_state=random_state,
+        **opt_para
     )
     opt.search(
         objective_function,
         n_iter=n_iter_max,
-        memory=False,
+        # memory=False,
         verbosity=False,
     )
 
@@ -94,8 +90,6 @@ def plot_search_paths(
 
             pos_list = np.array(opt_.pos_new_list)
             score_list = np.array(opt_.score_new_list)
-
-            # print("\n pos_list \n", pos_list, "\n")
 
             if len(pos_list) == 0:
                 continue
@@ -178,63 +172,3 @@ def plot_search_paths(
         plt.close("all")
 
         gc.collect()
-
-
-def search_path_gif(
-    path,
-    optimizer,
-    opt_para,
-    name,
-    n_iter,
-    objective_function,
-    search_space,
-    initialize,
-    random_state=0,
-    title=True,
-):
-    path = os.path.join(os.getcwd(), path)
-
-    print("\n\nname", name)
-    plots_dir = path + "/_plots/"
-    print("plots_dir", plots_dir)
-    os.makedirs(plots_dir, exist_ok=True)
-
-    plot_search_paths(
-        path=path,
-        optimizer=optimizer,
-        opt_para=opt_para,
-        n_iter_max=n_iter,
-        objective_function=objective_function,
-        search_space=search_space,
-        initialize=initialize,
-        random_state=random_state,
-        title=title,
-    )
-
-    ### ffmpeg
-    framerate = str(n_iter / 10)
-    # framerate = str(10)
-    _framerate = " -framerate " + framerate + " "
-
-    _opt_ = optimizer(search_space)
-    _input = " -i " + path + "/_plots/" + str(_opt_._name_) + "_" + "%03d.jpg "
-    _scale = " -vf scale=1200:-1:flags=lanczos "
-    _output = os.path.join(path, name)
-
-    ffmpeg_command = (
-        "ffmpeg -hide_banner -loglevel error -y"
-        + _framerate
-        + _input
-        + _scale
-        + _output
-    )
-    print("\n -----> ffmpeg_command \n", ffmpeg_command, "\n")
-    print("create " + name)
-
-    os.system(ffmpeg_command)
-
-    ### remove _plots
-    rm_files = glob.glob(path + "/_plots/*.jpg")
-    for f in rm_files:
-        os.remove(f)
-    os.rmdir(plots_dir)

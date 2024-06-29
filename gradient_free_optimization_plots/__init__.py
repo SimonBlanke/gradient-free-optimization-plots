@@ -7,8 +7,12 @@ __license__ = "MIT"
 
 
 from .search_path_gif import search_path_gif
-
+from .score_over_iterations import (
+    score_over_iter_plot,
+    score_over_iter_plot_error_bands,
+)
 
 __all__ = [
     "search_path_gif",
+    "score_over_iter_plot",
 ]
