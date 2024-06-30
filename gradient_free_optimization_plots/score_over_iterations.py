@@ -1,7 +1,6 @@
 import numpy as np
 import pandas as pd
-import plotly.express as px
-import plotly.graph_objs as go
+import matplotlib.pyplot as plt
 
 from tqdm import tqdm
 
@@ -52,56 +51,6 @@ def get_best_scores_iter(search_data):
 def score_over_iter_plot(
     optimizer_l,
     n_iter,
-    objective_function,
-    search_space,
-    constraints=None,
-    initialize=None,
-    opt_para=None,
-    random_state=0,
-):
-    if opt_para is None:
-        opt_para = {}
-    if constraints is None:
-        constraints = []
-    if initialize is None:
-        initialize = {"random": 4}
-
-    search_data_d = {}
-
-    for optimizer in optimizer_l:
-        opt = optimizer(search_space, random_state=random_state)
-        opt.search(objective_function, n_iter)
-
-        search_data_d[opt.name] = opt.search_data
-
-    best_score_iter_d = {}
-    for opt_name in search_data_d.keys():
-        print("opt_name", opt_name)
-        search_data = search_data_d[opt_name]
-        best_score_iter_d[opt_name] = get_best_scores_iter(search_data)
-    print("\n best_score_iter_d \n", best_score_iter_d, "\n")
-
-    df_d = {}
-
-    for opt_name in best_score_iter_d.keys():
-        df = pd.DataFrame(best_score_iter_d[opt_name], columns=["score"])
-        df["nth iteration"] = list(range(1, len(df) + 1))
-        df["Optimizer"] = opt_name
-
-        df_d[opt_name] = df
-
-    """
-    plot_data = pd.concat(list(df_d.values()))
-    print("\n plot_data \n", plot_data, "\n")
-
-    fig = px.line(plot_data, x="nth iteration", y="score", color="Optimizer")
-    fig.show()
-    """
-
-
-def score_over_iter_plot_error_bands(
-    optimizer_l,
-    n_iter,
     n_runs,
     objective_function,
     search_space,
@@ -121,7 +70,7 @@ def score_over_iter_plot_error_bands(
     search_data_d = {}
 
     for optimizer in optimizer_l:
-        print("\n\n", optimizer.name)
+        print("\n", optimizer.name)
         search_data_d[optimizer.name] = []
         for run in range(n_runs):
             opt = optimizer(
@@ -157,50 +106,35 @@ def score_over_iter_plot_error_bands(
         df = pd.DataFrame(df_dict)
         plot_data_d[opt_name] = df
 
-    scatter_plot_l = []
+    f, ax = plt.subplots(1)
+    # plt.yscale("log")
 
-    for idx, opt_name in enumerate(plot_data_d.keys()):
-        plot_data = plot_data_d[opt_name]
+    worst_value = np.inf
+    for optimizer in optimizer_l:
+        x = plot_data_d[optimizer.name]["nth iteration"]
+        y = plot_data_d[optimizer.name]["average score"]
+        e = plot_data_d[optimizer.name]["standard deviation"]
 
-        color = DEFAULT_PLOTLY_COLORS[idx]
+        plt.plot(x, y, label=optimizer.name)
+        # plt.fill_between(x, y - e, y + e, alpha=0.1)
 
-        scatter_plot = go.Scatter(
-            name=opt_name,
-            x=plot_data["nth iteration"].values,
-            y=-plot_data["average score"].values,
-            mode="lines",
-            line=dict(color=color),
-        )
-        scatter_plot_l.append(scatter_plot)
+        y_min = np.amin(y)
+        if y_min < worst_value:
+            worst_value = y_min
 
-        if error_bands:
-            scatter_plot_upper = go.Scatter(
-                name="Upper Bound",
-                x=plot_data["nth iteration"],
-                y=-(plot_data["average score"] + plot_data["standard deviation"]),
-                mode="lines",
-                marker=dict(color="#444"),
-                line=dict(width=0),
-                showlegend=False,
-            )
-            scatter_plot_l.append(scatter_plot_upper)
+    plt.gca().invert_yaxis()
 
-            scatter_plot_lower = go.Scatter(
-                name="Lower Bound",
-                x=plot_data["nth iteration"].values,
-                y=-(
-                    plot_data["average score"].values
-                    - plot_data["standard deviation"].values
-                ),
-                marker=dict(color="#444"),
-                line=dict(width=0),
-                mode="lines",
-                fillcolor=rgb_to_rgba(scatter_plot.line.color, 0.1),
-                fill="tonexty",
-                showlegend=False,
-            )
-            scatter_plot_l.append(scatter_plot_lower)
+    print("worst_value", worst_value)
 
-    fig = go.Figure(scatter_plot_l)
-    fig.update_yaxes(type="log")
-    fig.show()
+    ax.set_ylim(bottom=0, top=worst_value + worst_value * 0.01)
+
+    plt.legend(loc="upper right", bbox_to_anchor=(1.01, 1.01))
+    plt.tight_layout()
+
+    # plt.margins(0, 0)
+    plt.savefig(
+        "test_img",
+        dpi=250,
+        pad_inches=0,
+        # bbox_inches="tight",
+    )
