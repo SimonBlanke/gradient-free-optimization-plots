@@ -3,18 +3,17 @@
 # License: MIT License
 
 
+from .plot_search_paths import plot_search_paths
+import glob
+import os
+import warnings
+
+
 def warn(*args, **kwargs):
     pass
 
 
-import warnings
-
 warnings.warn = warn
-
-import os
-import glob
-
-from .plot_search_paths import plot_search_paths
 
 
 dir_ = os.path.dirname(os.path.abspath(__file__))
@@ -64,12 +63,14 @@ def search_path_gif(
         title=title,
     )
 
-    ### ffmpeg
+    # ffmpeg
     framerate = str(n_iter / 10)
     # framerate = str(10)
     _framerate = " -framerate " + framerate + " "
 
-    _input = " -i " + path + "/_plots/" + str(optimizer._name_) + "_" + "%03d.jpg "
+    _input = (
+        " -i " + path + "/_plots/" + str(optimizer._name_) + "_" + "%03d.jpg "
+    )
     _scale = " -vf scale=1200:-1:flags=lanczos "
     _output = os.path.join(path, name)
 
@@ -85,7 +86,7 @@ def search_path_gif(
 
     os.system(ffmpeg_command)
 
-    ### remove _plots
+    # remove _plots
     rm_files = glob.glob(path + "/_plots/*.jpg")
     for f in rm_files:
         os.remove(f)
