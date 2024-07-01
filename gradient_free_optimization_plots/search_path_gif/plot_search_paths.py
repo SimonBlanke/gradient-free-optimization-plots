@@ -113,17 +113,17 @@ def plot_search_path(
 
     if title == True:
         title_name = opt.name + "\n" + opt_para_name
-        plt.title(title_name, loc="left")
-        plt.title(opt_para_value, loc="center")
+        plt.title(title_name, loc="left", fontsize=18)
+        plt.title(opt_para_value, loc="center", fontsize=15)
     elif isinstance(title, str):
-        plt.title(title, loc="left")
+        plt.title(title, loc="left", fontsize=18)
 
-    plt.title(nth_iteration, loc="right", fontsize=8)
+    plt.title(nth_iteration, loc="right", fontsize=10)
 
     # plt.xlim((-101, 201))
     # plt.ylim((-101, 201))
-    clb = plt.colorbar()
-    clb.set_label("score", labelpad=-50, y=1.03, rotation=0)
+    clb = plt.colorbar(fraction=0.046, pad=0.04)
+    clb.set_label("score", labelpad=-15, y=1.05, rotation=0)
 
     # plt.legend(loc="upper left", bbox_to_anchor=(-0.10, 1.2))
 
@@ -131,9 +131,9 @@ def plot_search_path(
 
     if show_opt_para:
         plt.subplots_adjust(top=0.75)
+
     plt.tight_layout()
 
-    # plt.margins(0, 0)
     plt.savefig(
         path
         + "/_plots/"
@@ -143,7 +143,7 @@ def plot_search_path(
         + ".jpg",
         dpi=150,
         pad_inches=0,
-        # bbox_inches="tight",
+        bbox_inches="tight",
     )
 
     plt.ioff()
