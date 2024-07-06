@@ -2,9 +2,9 @@
 # Email: simon.blanke@yahoo.com
 # License: MIT License
 
-from .search_path_gif import search_path_gif
+from .search_path_gif import SearchPathGif
 
 
 __all__ = [
-    "search_path_gif",
+    "SearchPathGif",
 ]
