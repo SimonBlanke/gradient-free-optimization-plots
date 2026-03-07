@@ -2,25 +2,15 @@
 # Email: simon.blanke@yahoo.com
 # License: MIT License
 
-
-from .plot_search_paths import plot_search_paths
 import glob
 import os
-import warnings
+import subprocess
 
-
-def warn(*args, **kwargs):
-    pass
-
-
-warnings.warn = warn
-
-
-dir_ = os.path.dirname(os.path.abspath(__file__))
+from .plot_search_paths import plot_search_paths
 
 
 class SearchPathGif:
-    def __init__(self, path) -> None:
+    def __init__(self, path=None) -> None:
         if path is None:
             path = "./gifs"
         path = os.path.join(os.getcwd(), path)
@@ -28,7 +18,7 @@ class SearchPathGif:
         self.path = path
 
     def add_optimizer(
-        self, optimizer, opt_para, initialize, n_iter, random_state
+        self, optimizer, n_iter, opt_para=None, initialize=None, random_state=None
     ):
         if opt_para is None:
             opt_para = {}
@@ -41,7 +31,7 @@ class SearchPathGif:
         self.n_iter = n_iter
         self.random_state = random_state
 
-    def add_test_function(self, objective_function, search_space, constraints):
+    def add_test_function(self, objective_function, search_space, constraints=None):
         if constraints is None:
             constraints = []
 
@@ -49,7 +39,7 @@ class SearchPathGif:
         self.search_space = search_space
         self.constraints = constraints
 
-    def add_plot_layout(self, name, title):
+    def add_plot_layout(self, name=None, title=None):
         if name is None:
             name = str(self.optimizer._name_) + ".gif"
 
@@ -57,9 +47,7 @@ class SearchPathGif:
         self.title = title
 
     def create(self):
-        print("\n\n name", self.name)
-        plots_dir = self.path + "/_plots/"
-        print(" plots_dir", plots_dir)
+        plots_dir = os.path.join(self.path, "_plots")
         os.makedirs(plots_dir, exist_ok=True)
 
         plot_search_paths(
@@ -75,36 +63,27 @@ class SearchPathGif:
             title=self.title,
         )
 
-        # ffmpeg
         framerate = str(self.n_iter / 10)
-        # framerate = str(10)
-        _framerate = " -framerate " + framerate + " "
-
-        _input = (
-            " -i "
-            + self.path
-            + "/_plots/"
-            + str(self.optimizer._name_)
-            + "_"
-            + "%03d.jpg "
+        input_pattern = os.path.join(
+            plots_dir, str(self.optimizer._name_) + "_%03d.jpg"
         )
-        _scale = " -vf scale=1200:-1:flags=lanczos "
-        _output = os.path.join(self.path, self.name)
+        output_path = os.path.join(self.path, self.name)
 
-        ffmpeg_command = (
-            "ffmpeg -hide_banner -loglevel error -y"
-            + _framerate
-            + _input
-            + _scale
-            + _output
+        subprocess.run(
+            [
+                "ffmpeg",
+                "-hide_banner",
+                "-loglevel", "error",
+                "-y",
+                "-framerate", framerate,
+                "-i", input_pattern,
+                "-vf", "scale=1200:-1:flags=lanczos",
+                output_path,
+            ],
+            check=True,
         )
-        print("\n -----> ffmpeg_command \n", ffmpeg_command, "\n")
-        print("create " + self.name)
 
-        os.system(ffmpeg_command)
-
-        # remove _plots
-        rm_files = glob.glob(self.path + "/_plots/*.jpg")
+        rm_files = glob.glob(os.path.join(plots_dir, "*.jpg"))
         for f in rm_files:
             os.remove(f)
         os.rmdir(plots_dir)

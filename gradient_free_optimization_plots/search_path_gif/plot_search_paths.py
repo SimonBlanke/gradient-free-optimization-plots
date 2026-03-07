@@ -2,20 +2,25 @@
 # Email: simon.blanke@yahoo.com
 # License: MIT License
 
-from gradient_free_optimizers.optimizers.core_optimizer.converter import (
-    Converter,
-)
 import gc
-import numpy as np
-import pandas as pd
-from tqdm import tqdm
+import os
 
+import numpy as np
+from gradient_free_optimizers.optimizers.core_optimizer.converter import Converter
+from tqdm import tqdm
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 
 plt.rcParams["figure.facecolor"] = "w"
 mpl.use("agg")
+
+
+def _objective_function_np(objective_function, search_space, args):
+    params = {}
+    for i, para_name in enumerate(search_space):
+        params[para_name] = args[i]
+    return objective_function(params)
 
 
 def plot_search_path(
@@ -29,30 +34,17 @@ def plot_search_path(
     path,
     show_opt_para,
 ):
-    def objective_function_np(args):
-        params = {}
-        for i, para_name in enumerate(search_space):
-            params[para_name] = args[i]
-
-        return objective_function(params)
-
     plt.figure(figsize=(7, 7))
     plt.set_cmap("jet_r")
-    # jet_r
 
     x_all, y_all = search_space["x0"], search_space["x1"]
     xi, yi = np.meshgrid(x_all, y_all)
-    zi = objective_function_np((xi, yi))
-
+    zi = _objective_function_np(objective_function, search_space, (xi, yi))
     zi = np.rot90(zi, k=1)
 
     plt.imshow(
         zi,
         alpha=0.15,
-        # interpolation="antialiased",
-        # vmin=z.min(),
-        # vmax=z.max(),
-        # origin="lower",
         extent=[x_all.min(), x_all.max(), y_all.min(), y_all.max()],
     )
 
@@ -66,14 +58,13 @@ def plot_search_path(
         if n_iter_tmp == 0:
             continue
 
-        pos_list = np.array(opt_.pos_new_list)
-        score_list = np.array(opt_.score_new_list)
+        pos_list = np.array(opt_._pos_new_list)
+        score_list = np.array(opt_._score_new_list)
 
         if len(pos_list) == 0:
             continue
 
-        values_list = conv.positions2values(pos_list)
-        values_list = np.array(values_list)
+        values_list = np.array(conv.positions2values(pos_list))
 
         plt.plot(
             values_list[:n_iter_tmp, 0],
@@ -111,7 +102,7 @@ def plot_search_path(
             opt_para_name += "\n " + "     " + para_name + ": "
             opt_para_value += "\n " + str(para_value) + "                "
 
-    if title == True:
+    if title is True:
         title_name = opt.name + "\n" + opt_para_name
         plt.title(title_name, loc="left", fontsize=18)
         plt.title(opt_para_value, loc="center", fontsize=15)
@@ -120,14 +111,8 @@ def plot_search_path(
 
     plt.title(nth_iteration, loc="right", fontsize=10)
 
-    # plt.xlim((-101, 201))
-    # plt.ylim((-101, 201))
     clb = plt.colorbar(fraction=0.046, pad=0.04)
     clb.set_label("score", labelpad=-15, y=1.05, rotation=0)
-
-    # plt.legend(loc="upper left", bbox_to_anchor=(-0.10, 1.2))
-
-    # plt.axis("off")
 
     if show_opt_para:
         plt.subplots_adjust(top=0.75)
@@ -135,25 +120,20 @@ def plot_search_path(
     plt.tight_layout()
 
     plt.savefig(
-        path
-        + "/_plots/"
-        + opt._name_
-        + "_"
-        + "{0:0=3d}".format(n_iter)
-        + ".jpg",
+        os.path.join(
+            path,
+            "_plots",
+            opt._name_ + "_" + "{0:0=3d}".format(n_iter) + ".jpg",
+        ),
         dpi=150,
         pad_inches=0,
         bbox_inches="tight",
     )
 
     plt.ioff()
-    # Clear the current axes.
     plt.cla()
-    # Clear the current figure.
     plt.clf()
-    # Closes all the figure windows.
     plt.close("all")
-
     gc.collect()
 
 
@@ -169,22 +149,18 @@ def plot_search_paths(
     random_state,
     title,
 ):
-    if opt_para == {}:
-        show_opt_para = False
-    else:
-        show_opt_para = True
+    show_opt_para = bool(opt_para)
 
     opt = optimizer(
         search_space,
         initialize=initialize,
         constraints=constraints,
         random_state=random_state,
-        **opt_para
+        **opt_para,
     )
     opt.search(
         objective_function,
         n_iter=n_iter_max,
-        # memory=False,
         verbosity=False,
     )
 

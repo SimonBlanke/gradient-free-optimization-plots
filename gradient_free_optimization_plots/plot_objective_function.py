@@ -2,7 +2,6 @@
 # Email: simon.blanke@yahoo.com
 # License: MIT License
 
-
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -16,7 +15,6 @@ def plot_objective_function_2d(
         para = {}
         for arg, key in zip(args, search_space.keys()):
             para[key] = arg
-
         return objective_function(para)
 
     (x_all, y_all) = search_space.values()
@@ -24,7 +22,6 @@ def plot_objective_function_2d(
     zi = objective_function_np(xi, yi)
 
     plt.set_cmap("jet_r")
-
     plt.imshow(
         zi,
         alpha=alpha,
@@ -32,4 +29,4 @@ def plot_objective_function_2d(
     )
 
     plt.tight_layout()
-    return ax
+    return fig, ax

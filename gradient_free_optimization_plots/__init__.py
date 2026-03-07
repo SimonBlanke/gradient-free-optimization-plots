@@ -7,11 +7,11 @@ __license__ = "MIT"
 
 
 from .search_path_gif import SearchPathGif
-from .score_over_iterations import (
-    score_over_iter_plot,
-)
+from .score_over_iterations import score_over_iter_plot
+from .plot_objective_function import plot_objective_function_2d
 
 __all__ = [
     "SearchPathGif",
     "score_over_iter_plot",
+    "plot_objective_function_2d",
 ]
