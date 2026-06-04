@@ -27,14 +27,32 @@ def _draw_objective_background(ax, grid):
     return draw_objective(ax, x_all, y_all, zi, alpha=0.15)
 
 
-def _draw_search_paths(ax, opt, conv, n_iter):
+def _global_score_limits(opt):
+    """Min and max score over the whole search, across all sub-optimizers.
+
+    Using one fixed range for every frame and every sub-optimizer keeps a given
+    score mapped to the same color throughout the animation. Per-frame limits
+    recolor the same point as more points appear and give each population member
+    its own scale within a single frame.
+    """
+    scores = []
+    for opt_ in opt.optimizers:
+        scores.extend(opt_._score_new_list)
+    scores = np.array(scores)
+    return float(np.amin(scores)), float(np.amax(scores))
+
+
+def _draw_search_paths(ax, opt, conv, n_iter, score_limits):
     """Draw the visited positions of every sub-optimizer up to n_iter.
 
     n_iter is split across the sub-optimizers (one per particle/individual for
     population methods, a single one otherwise), so each contributes its share
-    of points. Returns the last scatter, which carries the score color scale
-    for the colorbar, or None if no point was drawn.
+    of points. score_limits is the fixed (vmin, vmax) color range shared by all
+    scatters so a score maps to the same color in every frame. Returns the last
+    scatter, which carries that color scale for the colorbar, or None if no
+    point was drawn.
     """
+    vmin, vmax = score_limits
     n_optimizers = len(opt.optimizers)
     scatter = None
 
@@ -71,8 +89,8 @@ def _draw_search_paths(ax, opt, conv, n_iter):
             c=score_list[:n_iter_tmp],
             marker="H",
             s=15,
-            vmin=np.amin(score_list[:n_iter_tmp]),
-            vmax=np.amax(score_list[:n_iter_tmp]),
+            vmin=vmin,
+            vmax=vmax,
             label=n,
             edgecolors="black",
             linewidth=0.3,
@@ -125,11 +143,12 @@ def plot_search_path(
     conv,
     path,
     show_opt_para,
+    score_limits,
 ):
     fig, ax = plt.subplots(figsize=(7, 7))
 
     image = _draw_objective_background(ax, grid)
-    scatter = _draw_search_paths(ax, opt, conv, n_iter)
+    scatter = _draw_search_paths(ax, opt, conv, n_iter, score_limits)
 
     ax.set_xlabel("x")
     ax.set_ylabel("y")
@@ -184,6 +203,10 @@ def plot_search_paths(
     # instead of recomputing it inside the per-frame loop
     grid = evaluate_objective_grid(objective_function, search_space)
 
+    # one score range for the whole animation keeps colors comparable across
+    # frames and across sub-optimizers
+    score_limits = _global_score_limits(opt)
+
     for n_iter in tqdm(range(1, n_iter_max + 1)):
         plot_search_path(
             title,
@@ -194,4 +217,5 @@ def plot_search_paths(
             conv,
             path,
             show_opt_para,
+            score_limits,
         )
