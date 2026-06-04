@@ -121,14 +121,14 @@ def _set_title(ax, title, opt, opt_para, n_iter, show_opt_para):
     ax.set_title(nth_iteration, loc="right", fontsize=10)
 
 
-def _save_frame(fig, path, name_stem, n_iter):
+def _save_frame(fig, path, name_stem, n_iter, dpi):
     fig.savefig(
         os.path.join(
             path,
             "_plots",
             name_stem + "_" + "{0:0=3d}".format(n_iter) + ".jpg",
         ),
-        dpi=150,
+        dpi=dpi,
         pad_inches=0,
         bbox_inches="tight",
     )
@@ -144,6 +144,7 @@ def plot_search_path(
     path,
     show_opt_para,
     score_limits,
+    dpi,
 ):
     fig, ax = plt.subplots(figsize=(7, 7))
 
@@ -164,7 +165,7 @@ def plot_search_path(
 
     fig.tight_layout()
 
-    _save_frame(fig, path, opt._name_, n_iter)
+    _save_frame(fig, path, opt._name_, n_iter, dpi)
 
     plt.close(fig)
     gc.collect()
@@ -181,6 +182,7 @@ def plot_search_paths(
     initialize,
     random_state,
     title,
+    dpi=150,
 ):
     show_opt_para = bool(opt_para)
 
@@ -218,4 +220,5 @@ def plot_search_paths(
             path,
             show_opt_para,
             score_limits,
+            dpi,
         )

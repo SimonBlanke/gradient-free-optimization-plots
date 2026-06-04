@@ -17,6 +17,11 @@ class SearchPathGif:
 
         self.path = path
 
+        self.width = 1200
+        self.fps = None
+        self.dpi = 150
+        self.colors = None
+
     def add_optimizer(
         self, optimizer, n_iter, opt_para=None, initialize=None, random_state=None
     ):
@@ -46,6 +51,34 @@ class SearchPathGif:
         self.name = name
         self.title = title
 
+    def configure_output(self, width=None, fps=None, dpi=None, colors=None):
+        """Control size, speed and file size of the produced GIF.
+
+        width is the final pixel width; the height keeps the aspect ratio. fps
+        is the playback rate and stays at n_iter / 10 while left as None. dpi is
+        the rendering resolution of each frame; raise it together with width for
+        a large, sharp GIF. colors is a palette size between 2 and 256; when set
+        the GIF is re-encoded with an optimized palette, which gives a smaller
+        file with better colors, while None writes the GIF in one pass as
+        before. Only the arguments you pass are changed.
+        """
+        if width is not None:
+            if int(width) <= 0:
+                raise ValueError(f"width must be positive, got {width}")
+            self.width = int(width)
+        if fps is not None:
+            if float(fps) <= 0:
+                raise ValueError(f"fps must be positive, got {fps}")
+            self.fps = float(fps)
+        if dpi is not None:
+            if int(dpi) <= 0:
+                raise ValueError(f"dpi must be positive, got {dpi}")
+            self.dpi = int(dpi)
+        if colors is not None:
+            if not 2 <= int(colors) <= 256:
+                raise ValueError(f"colors must be in 2..256, got {colors}")
+            self.colors = int(colors)
+
     def create(self):
         plots_dir = os.path.join(self.path, "_plots")
         os.makedirs(plots_dir, exist_ok=True)
@@ -61,29 +94,83 @@ class SearchPathGif:
             initialize=self.initialize,
             random_state=self.random_state,
             title=self.title,
+            dpi=self.dpi,
         )
 
-        framerate = str(self.n_iter / 10)
+        framerate = str(self.fps) if self.fps is not None else str(self.n_iter / 10)
         input_pattern = os.path.join(
             plots_dir, str(self.optimizer._name_) + "_%03d.jpg"
         )
         output_path = os.path.join(self.path, self.name)
 
+        self._assemble_gif(plots_dir, framerate, input_pattern, output_path)
+
+        for f in glob.glob(os.path.join(plots_dir, "*.jpg")):
+            os.remove(f)
+        palette_path = os.path.join(plots_dir, "_palette.png")
+        if os.path.exists(palette_path):
+            os.remove(palette_path)
+        os.rmdir(plots_dir)
+
+    def _assemble_gif(self, plots_dir, framerate, input_pattern, output_path):
+        scale = f"scale={self.width}:-1:flags=lanczos"
+
+        if self.colors is None:
+            subprocess.run(
+                [
+                    "ffmpeg",
+                    "-hide_banner",
+                    "-loglevel",
+                    "error",
+                    "-y",
+                    "-framerate",
+                    framerate,
+                    "-i",
+                    input_pattern,
+                    "-vf",
+                    scale,
+                    output_path,
+                ],
+                check=True,
+            )
+            return
+
+        # build an optimal palette from all frames, then re-encode using it;
+        # this gives a smaller file with better colors than ffmpeg's default
+        palette_path = os.path.join(plots_dir, "_palette.png")
         subprocess.run(
             [
                 "ffmpeg",
                 "-hide_banner",
-                "-loglevel", "error",
+                "-loglevel",
+                "error",
                 "-y",
-                "-framerate", framerate,
-                "-i", input_pattern,
-                "-vf", "scale=1200:-1:flags=lanczos",
+                "-framerate",
+                framerate,
+                "-i",
+                input_pattern,
+                "-vf",
+                f"{scale},palettegen=max_colors={self.colors}",
+                palette_path,
+            ],
+            check=True,
+        )
+        subprocess.run(
+            [
+                "ffmpeg",
+                "-hide_banner",
+                "-loglevel",
+                "error",
+                "-y",
+                "-framerate",
+                framerate,
+                "-i",
+                input_pattern,
+                "-i",
+                palette_path,
+                "-lavfi",
+                f"{scale}[x];[x][1:v]paletteuse",
                 output_path,
             ],
             check=True,
         )
-
-        rm_files = glob.glob(os.path.join(plots_dir, "*.jpg"))
-        for f in rm_files:
-            os.remove(f)
-        os.rmdir(plots_dir)
