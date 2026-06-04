@@ -18,7 +18,7 @@ class SearchPathGif:
         self.path = path
 
         self.width = 1200
-        self.fps = None
+        self.duration = 10.0
         self.dpi = 150
         self.colors = None
 
@@ -51,25 +51,27 @@ class SearchPathGif:
         self.name = name
         self.title = title
 
-    def configure_output(self, width=None, fps=None, dpi=None, colors=None):
+    def configure_output(self, width=None, duration=None, dpi=None, colors=None):
         """Control size, speed and file size of the produced GIF.
 
-        width is the final pixel width; the height keeps the aspect ratio. fps
-        is the playback rate and stays at n_iter / 10 while left as None. dpi is
-        the rendering resolution of each frame; raise it together with width for
-        a large, sharp GIF. colors is a palette size between 2 and 256; when set
-        the GIF is re-encoded with an optimized palette, which gives a smaller
-        file with better colors, while None writes the GIF in one pass as
-        before. Only the arguments you pass are changed.
+        width is the final pixel width; the height keeps the aspect ratio.
+        duration is the total play time in seconds, and the frame rate follows
+        from it as n_iter / duration, so a run keeps the same viewing time no
+        matter how many iterations it shows. dpi is the rendering resolution of
+        each frame; raise it together with width for a large, sharp GIF. colors
+        is a palette size between 2 and 256; when set the GIF is re-encoded with
+        an optimized palette, which gives a smaller file with better colors,
+        while None writes the GIF in one pass as before. Only the arguments you
+        pass are changed.
         """
         if width is not None:
             if int(width) <= 0:
                 raise ValueError(f"width must be positive, got {width}")
             self.width = int(width)
-        if fps is not None:
-            if float(fps) <= 0:
-                raise ValueError(f"fps must be positive, got {fps}")
-            self.fps = float(fps)
+        if duration is not None:
+            if float(duration) <= 0:
+                raise ValueError(f"duration must be positive, got {duration}")
+            self.duration = float(duration)
         if dpi is not None:
             if int(dpi) <= 0:
                 raise ValueError(f"dpi must be positive, got {dpi}")
@@ -97,7 +99,9 @@ class SearchPathGif:
             dpi=self.dpi,
         )
 
-        framerate = str(self.fps) if self.fps is not None else str(self.n_iter / 10)
+        # the frame rate follows from the wanted total play time, so the GIF
+        # runs for `duration` seconds regardless of how many iterations it shows
+        framerate = str(self.n_iter / self.duration)
         input_pattern = os.path.join(
             plots_dir, str(self.optimizer._name_) + "_%03d.jpg"
         )
