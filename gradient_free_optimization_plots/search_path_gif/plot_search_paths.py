@@ -40,11 +40,14 @@ def plot_search_path(
     x_all, y_all = search_space["x0"], search_space["x1"]
     xi, yi = np.meshgrid(x_all, y_all)
     zi = _objective_function_np(objective_function, search_space, (xi, yi))
-    zi = np.rot90(zi, k=1)
 
+    # zi is indexed [row=x1, col=x0] from meshgrid; origin="lower" maps it onto
+    # the axes without rotation. An earlier np.rot90 here transposed the heatmap
+    # against the points (invisible only for x0/x1-symmetric functions).
     plt.imshow(
         zi,
         alpha=0.15,
+        origin="lower",
         extent=[x_all.min(), x_all.max(), y_all.min(), y_all.max()],
     )
 
