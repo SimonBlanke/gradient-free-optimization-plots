@@ -22,8 +22,8 @@ plt.rcParams["figure.facecolor"] = "w"
 mpl.use("agg")
 
 
-def _draw_objective_background(ax, objective_function, search_space):
-    x_all, y_all, zi = evaluate_objective_grid(objective_function, search_space)
+def _draw_objective_background(ax, grid):
+    x_all, y_all, zi = grid
     return draw_objective(ax, x_all, y_all, zi, alpha=0.15)
 
 
@@ -120,8 +120,7 @@ def plot_search_path(
     title,
     opt,
     opt_para,
-    objective_function,
-    search_space,
+    grid,
     n_iter,
     conv,
     path,
@@ -129,7 +128,7 @@ def plot_search_path(
 ):
     fig, ax = plt.subplots(figsize=(7, 7))
 
-    image = _draw_objective_background(ax, objective_function, search_space)
+    image = _draw_objective_background(ax, grid)
     scatter = _draw_search_paths(ax, opt, conv, n_iter)
 
     ax.set_xlabel("x")
@@ -180,13 +179,17 @@ def plot_search_paths(
     )
 
     conv = Converter(search_space)
+
+    # the objective grid is identical for every frame, so evaluate it once
+    # instead of recomputing it inside the per-frame loop
+    grid = evaluate_objective_grid(objective_function, search_space)
+
     for n_iter in tqdm(range(1, n_iter_max + 1)):
         plot_search_path(
             title,
             opt,
             opt_para,
-            objective_function,
-            search_space,
+            grid,
             n_iter,
             conv,
             path,
